@@ -1,0 +1,45 @@
+name: Sync mandi prices
+
+# AGMARKNET publishes through the afternoon IST, so run hourly across the
+# working day rather than once at midnight.
+on:
+  schedule:
+    - cron: "17 3-16 * * *"   # 08:47–22:17 IST, hourly
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mandi-prices
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Pull latest prices
+        env:
+          DATA_GOV_API_KEY: ${{ secrets.DATA_GOV_API_KEY }}
+          STATES: "Gujarat"
+          WINDOW_DAYS: "15"
+          OUT_DIR: "data"
+        run: python3 scripts/fetch_mandi_prices.py
+
+      - name: Commit if anything changed
+        run: |
+          git config user.name "mandi-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "No price changes this run."
+          else
+            git commit -m "data: mandi prices $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
