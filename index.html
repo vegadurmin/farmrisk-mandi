@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Post-Harvest — Mandi Prices</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7f7; --surface:#ffffff; --surface-2:#fbfcfc;
+  --line:#e6e8e7; --line-strong:#d6dad8;
+  --ink:#111a17; --ink-2:#5c6a65; --ink-3:#8b9791;
+  --accent:#0e9f6e; --accent-deep:#047857; --accent-tint:#ecfdf5; --accent-line:#b7e7d2;
+  --warn:#b45309; --warn-tint:#fff7ed; --warn-line:#fed7aa;
+  --radius:14px; --radius-sm:9px;
+  --shadow:0 1px 2px rgba(16,32,26,.05);
+}
+html[data-theme="dark"]{
+  --bg:#0b100e; --surface:#121816; --surface-2:#161d1a;
+  --line:#222c28; --line-strong:#2e3a35;
+  --ink:#e9efec; --ink-2:#9aa8a2; --ink-3:#71807a;
+  --accent:#34d399; --accent-deep:#10b981; --accent-tint:#0f2a21; --accent-line:#1d4c3b;
+  --warn:#fbbf24; --warn-tint:#2a2112; --warn-line:#4a3a17;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Source Serif 4",Georgia,serif;font-weight:600;margin:0;letter-spacing:-.01em}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;
+  padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--line)}
+.topbar h1{font-size:19px}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);
+  background:var(--surface);padding:8px 12px;border-radius:10px;font-size:13px;color:var(--ink-2)}
+.pill.fresh{border-color:var(--accent-line);background:var(--accent-tint);color:var(--accent-deep)}
+.pill.old{border-color:var(--warn-line);background:var(--warn-tint);color:var(--warn)}
+html[data-theme="dark"] .pill.fresh{color:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);
+  background:var(--surface);padding:8px 13px;border-radius:10px;font-size:13px;font-weight:500;
+  transition:border-color .15s,background .15s}
+.btn:hover{border-color:var(--accent);color:var(--accent-deep)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.icon-btn{width:38px;height:38px;justify-content:center;padding:0}
+
+.wrap{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-head{display:flex;align-items:flex-start;gap:12px;padding:18px 20px}
+.card-body{padding:0 20px 20px}
+.glyph{width:38px;height:38px;flex:none;border-radius:11px;background:var(--accent-tint);
+  color:var(--accent-deep);display:grid;place-items:center;font-size:17px}
+html[data-theme="dark"] .glyph{color:var(--accent)}
+.card-head h2{font-size:17px}
+.sub{color:var(--ink-2);font-size:13px;margin-top:2px}
+.tag{border:1px solid var(--accent-line);background:var(--accent-tint);color:var(--accent-deep);
+  border-radius:999px;padding:3px 11px;font-size:12px;font-weight:500}
+html[data-theme="dark"] .tag{color:var(--accent)}
+
+.banner{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:var(--radius);
+  padding:18px 20px;display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.banner h2{font-size:17px}
+
+.controls{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12px;color:var(--ink-2)}
+.field select{background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;
+  padding:9px 11px;font-size:13.5px;width:100%}
+.field select:disabled{color:var(--ink-3);background:var(--surface-2)}
+
+.notice{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--warn-line);
+  background:var(--warn-tint);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;font-size:13px}
+.notice b{font-weight:600}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat{border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;background:var(--surface-2)}
+.stat .k{font-size:12px;color:var(--ink-2)}
+.stat .v{font-size:24px;margin-top:6px;letter-spacing:-.02em;font-weight:600}
+.stat .n{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+.stat.lead{background:var(--accent-tint);border-color:var(--accent-line)}
+.stat.lead .v{color:var(--accent-deep)}
+html[data-theme="dark"] .stat.lead .v{color:var(--accent)}
+.delta{font-size:12px;margin-left:7px;font-weight:500}
+.up{color:var(--accent-deep)} .down{color:var(--warn)}
+html[data-theme="dark"] .up{color:var(--accent)}
+
+.block{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+.block h3{font-size:14px;font-family:Inter,sans-serif;font-weight:600;margin-bottom:2px}
+.block .sub{margin-bottom:12px}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--ink-2);margin-bottom:10px;flex-wrap:wrap}
+.swatch{display:inline-block;width:20px;height:6px;border-radius:3px;vertical-align:middle;margin-right:6px}
+.rowlabel{font-size:12.5px;fill:var(--ink-2)}
+.rowvalue{font-size:12.5px;fill:var(--ink);font-variant-numeric:tabular-nums}
+.axis{font-size:11.5px;fill:var(--ink-3)}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius-sm)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:13.5px}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--surface-2);color:var(--ink-2);font-weight:500;font-size:12.5px}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--accent-deep)}
+tbody tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+.best td{background:var(--accent-tint)}
+
+.state{border:1px dashed var(--line-strong);border-radius:var(--radius-sm);padding:38px 20px;
+  text-align:center;color:var(--ink-2)}
+.state strong{display:block;color:var(--ink);font-size:15px;margin-bottom:6px;font-weight:600}
+.state.err{border-style:solid;border-color:var(--warn-line);background:var(--warn-tint);color:var(--ink)}
+.state.err strong{color:var(--warn)}
+.state code{font-size:12px;background:var(--surface-2);padding:2px 6px;border-radius:5px;border:1px solid var(--line)}
+footer{margin-top:22px;color:var(--ink-3);font-size:12px;text-align:center}
+footer a{color:var(--ink-2)}
+
+@media (max-width:860px){.controls,.stats{grid-template-columns:repeat(2,1fr)}.topbar{flex-wrap:wrap}}
+@media (max-width:520px){.controls,.stats{grid-template-columns:1fr}.topbar h1{font-size:17px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <h1>Post-Harvest</h1>
+  <span class="pill num" id="sync">Loading…</span>
+  <span class="spacer"></span>
+  <button class="btn" id="csv" disabled>Download CSV</button>
+  <button class="btn icon-btn" id="theme" aria-label="Switch colour theme">◑</button>
+</header>
+
+<main class="wrap">
+
+  <div class="banner">
+    <div class="glyph" aria-hidden="true">₹</div>
+    <div>
+      <h2>Mandi price, from the APMC daily returns</h2>
+      <div class="sub">Markets file with AGMARKNET through the afternoon. This page reads a snapshot synced hourly, so it loads instantly and never exposes an API key.</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="field">
+      <label for="state">State</label>
+      <select id="state" disabled></select>
+    </div>
+    <div class="field">
+      <label for="district">District</label>
+      <select id="district" disabled></select>
+    </div>
+    <div class="field">
+      <label for="commodity">Commodity</label>
+      <select id="commodity" disabled></select>
+    </div>
+    <div class="field">
+      <label for="day">Reporting day</label>
+      <select id="day" disabled></select>
+    </div>
+  </div>
+
+  <div id="notice"></div>
+
+  <section class="card">
+    <div class="card-head">
+      <div class="glyph" aria-hidden="true">▤</div>
+      <div style="flex:1">
+        <h2>Mandi Price <span class="tag" id="cropTag">—</span></h2>
+        <div class="sub" id="scopeLine">Loading the price snapshot…</div>
+      </div>
+      <span class="pill num" id="asOf" hidden></span>
+    </div>
+
+    <div class="card-body">
+      <div class="stats">
+        <div class="stat lead">
+          <div class="k">Modal price</div>
+          <div class="v num" id="kModal">₹—</div>
+          <div class="n" id="kModalNote">Median across reporting markets</div>
+        </div>
+        <div class="stat">
+          <div class="k">Lowest bid</div>
+          <div class="v num" id="kMin">₹—</div>
+          <div class="n" id="kMinNote">Per quintal</div>
+        </div>
+        <div class="stat">
+          <div class="k">Highest bid</div>
+          <div class="v num" id="kMax">₹—</div>
+          <div class="n" id="kMaxNote">Per quintal</div>
+        </div>
+        <div class="stat">
+          <div class="k">Markets reporting</div>
+          <div class="v num" id="kMkt">—</div>
+          <div class="n" id="kMktNote">On this day</div>
+        </div>
+      </div>
+      <div id="panel" style="margin-top:18px">
+        <div class="state"><strong>Reading data/index.json</strong>One moment.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Source: Directorate of Marketing &amp; Inspection (AGMARKNET) via
+    <a href="https://data.gov.in" target="_blank" rel="noopener">data.gov.in</a>,
+    resource 9ef84268. Prices are ₹ per quintal.
+  </footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var DATA_DIR = "data/";
+  var $ = function (id) { return document.getElementById(id); };
+
+  var index = null;     // data/index.json
+  var rows = [];        // records for the loaded state
+  var view = [];        // what is on screen
+  var relaxed = null;   // which filter the fallback ladder had to drop
+  var sort = { key: "p", dir: -1 };
+
+  /* ---------- helpers ---------- */
+
+  function rupee(n) {
+    if (n === null || n === undefined || !isFinite(n)) return "₹—";
+    return "₹" + Math.round(n).toLocaleString("en-IN");
+  }
+  function median(a) {
+    var s = a.filter(function (v) { return isFinite(v); }).sort(function (x, y) { return x - y; });
+    if (!s.length) return null;
+    var m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  }
+  function uniq(list) {
+    var seen = {}, out = [];
+    list.forEach(function (v) { if (v && !seen[v]) { seen[v] = 1; out.push(v); } });
+    return out.sort(function (a, b) { return a.localeCompare(b); });
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  function human(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso + "T00:00:00");
+    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  }
+  function daysOld(iso) {
+    var then = new Date(iso + "T00:00:00"), now = new Date();
+    return Math.round((now.setHours(0, 0, 0, 0) - then) / 86400000);
+  }
+  function fill(sel, items, allLabel, keep) {
+    var prev = keep ? sel.value : "";
+    sel.innerHTML = "";
+    if (allLabel !== null) {
+      var o = document.createElement("option");
+      o.value = ""; o.textContent = allLabel;
+      sel.appendChild(o);
+    }
+    items.forEach(function (v) {
+      var e = document.createElement("option");
+      if (typeof v === "object") { e.value = v.value; e.textContent = v.label; }
+      else { e.value = v; e.textContent = v; }
+      sel.appendChild(e);
+    });
+    if (prev) sel.value = prev;
+    sel.disabled = false;
+  }
+  function setPanel(html) { $("panel").innerHTML = html; }
+  function resetStats() {
+    $("kModal").textContent = "₹—";
+    $("kMin").textContent = "₹—";
+    $("kMax").textContent = "₹—";
+    $("kMkt").textContent = "—";
+  }
+
+  /* ---------- fallback ladder ----------
+     1. chosen district + commodity on the chosen day
+     2. same pair, on the most recent day that actually reported
+     3. commodity anywhere in the state, most recent day
+     Whatever it lands on, the page says so plainly. */
+
+  function resolve() {
+    var dist = $("district").value, crop = $("commodity").value, day = $("day").value;
+    relaxed = null;
+
+    var byCrop = rows.filter(function (r) { return !crop || r.c === crop; });
+    var byBoth = byCrop.filter(function (r) { return !dist || r.d === dist; });
+
+    var hit = byBoth.filter(function (r) { return r.t === day; });
+    if (hit.length) return hit;
+
+    var days = uniq(byBoth.map(function (r) { return r.t; }));
+    if (days.length) {
+      var last = days[days.length - 1];
+      relaxed = { kind: "day", from: day, to: last };
+      $("day").value = last;
+      return byBoth.filter(function (r) { return r.t === last; });
+    }
+
+    if (dist) {
+      var wide = uniq(byCrop.map(function (r) { return r.t; }));
+      if (wide.length) {
+        var d2 = wide[wide.length - 1];
+        relaxed = { kind: "district", from: dist, to: d2 };
+        $("day").value = d2;
+        return byCrop.filter(function (r) { return r.t === d2; });
+      }
+    }
+    return [];
+  }
+
+  function noticeFor(stateName) {
+    var n = $("notice");
+    if (!relaxed) { n.innerHTML = ""; return; }
+    var msg;
+    if (relaxed.kind === "day") {
+      msg = "<b>No returns filed for " + human(relaxed.from) + ".</b> Showing " + human(relaxed.to) +
+            ", the most recent day these markets reported. APMCs skip holidays and days with no arrivals.";
+    } else {
+      msg = "<b>" + esc(relaxed.from) + " filed nothing in this window.</b> Showing the nearest reporting markets across " +
+            esc(stateName) + " for " + human(relaxed.to) + ". Treat these as a reference rate, not a local quote.";
+    }
+    n.innerHTML = '<div class="notice"><span aria-hidden="true">⚠</span><div>' + msg + "</div></div>";
+  }
+
+  /* ---------- charts ---------- */
+
+  function rangeChart(list) {
+    var top = list.slice().sort(function (a, b) { return (b.p || 0) - (a.p || 0); }).slice(0, 12);
+    if (top.length < 2) return "";
+    var lo = Math.min.apply(null, top.map(function (r) { return r.a || r.p; }));
+    var hi = Math.max.apply(null, top.map(function (r) { return r.b || r.p; }));
+    if (!(hi > lo)) hi = lo + 1;
+
+    var rowH = 30, padL = 170, padR = 80, w = 900, h = top.length * rowH + 14;
+    var x = function (v) { return padL + (v - lo) / (hi - lo) * (w - padL - padR); };
+
+    var body = top.map(function (r, i) {
+      var y = i * rowH + 12;
+      var x1 = x(r.a !== null ? r.a : r.p), x2 = x(r.b !== null ? r.b : r.p);
+      var xm = x(r.p !== null ? r.p : r.a);
+      var label = r.m.length > 23 ? r.m.slice(0, 22) + "…" : r.m;
+      return "<g>" +
+        '<text class="rowlabel" x="' + (padL - 12) + '" y="' + (y + 5) + '" text-anchor="end">' + esc(label) + "</text>" +
+        '<rect x="' + x1 + '" y="' + (y - 4) + '" width="' + Math.max(2, x2 - x1) + '" height="9" rx="4.5" fill="var(--accent-line)"></rect>' +
+        '<circle cx="' + xm + '" cy="' + (y + .5) + '" r="5.5" fill="var(--accent-deep)"></circle>' +
+        '<text class="rowvalue" x="' + (w - 10) + '" y="' + (y + 5) + '" text-anchor="end">' + rupee(r.p) + "</text>" +
+        "<title>" + esc(r.m) + " — min " + rupee(r.a) + ", modal " + rupee(r.p) + ", max " + rupee(r.b) + "</title></g>";
+    }).join("");
+
+    return '<div class="block"><h3>Where the crop is fetching most</h3>' +
+      '<div class="sub">Bar is the day\u2019s bid range in each market. Dot is the modal rate.</div>' +
+      '<div class="legend">' +
+        '<span><span class="swatch" style="background:var(--accent-line)"></span>Low to high bid</span>' +
+        '<span><span class="swatch" style="background:var(--accent-deep);width:10px;height:10px;border-radius:50%"></span>Modal rate</span>' +
+      "</div>" +
+      '<svg viewBox="0 0 ' + w + " " + h + '" width="100%" height="' + h + '" role="img" aria-label="Price range by market">' + body + "</svg></div>";
+  }
+
+  function trendChart() {
+    var dist = $("district").value, crop = $("commodity").value;
+    if (!crop) return "";
+    var pool = rows.filter(function (r) {
+      return r.c === crop && (!dist || relaxed ? true : r.d === dist);
+    });
+    var days = uniq(pool.map(function (r) { return r.t; }));
+    if (days.length < 3) return "";
+
+    var pts = days.map(function (d) {
+      return { t: d, v: median(pool.filter(function (r) { return r.t === d; }).map(function (r) { return r.p; })) };
+    }).filter(function (p) { return p.v !== null; });
+    if (pts.length < 3) return "";
+
+    var vals = pts.map(function (p) { return p.v; });
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var span = hi - lo || 1;
+    lo -= span * .15; hi += span * .15;
+
+    var w = 900, h = 190, padL = 68, padR = 14, padT = 12, padB = 30;
+    var X = function (i) { return padL + (i / (pts.length - 1)) * (w - padL - padR); };
+    var Y = function (v) { return padT + (1 - (v - lo) / (hi - lo)) * (h - padT - padB); };
+
+    var line = pts.map(function (p, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(p.v).toFixed(1); }).join(" ");
+    var area = line + " L" + X(pts.length - 1).toFixed(1) + " " + (h - padB) + " L" + X(0).toFixed(1) + " " + (h - padB) + " Z";
+
+    var dots = pts.map(function (p, i) {
+      return '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(p.v).toFixed(1) + '" r="3" fill="var(--accent-deep)">' +
+        "<title>" + human(p.t) + " — " + rupee(p.v) + "</title></circle>";
+    }).join("");
+
+    var grid = [hi, (hi + lo) / 2, lo].map(function (v) {
+      return '<line x1="' + padL + '" x2="' + (w - padR) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '" stroke="var(--line)"></line>' +
+        '<text class="axis" x="' + (padL - 10) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end">' + rupee(v) + "</text>";
+    }).join("");
+
+    var labels = [0, pts.length - 1].map(function (i) {
+      return '<text class="axis" x="' + X(i).toFixed(1) + '" y="' + (h - 10) + '" text-anchor="' + (i ? "end" : "start") + '">' + human(pts[i].t) + "</text>";
+    }).join("");
+
+    return '<div class="block"><h3>' + esc(crop) + " over the last " + pts.length + " reporting days</h3>" +
+      '<div class="sub">Median modal rate, built from the rolling snapshot. The source API keeps no history of its own.</div>' +
+      '<svg viewBox="0 0 ' + w + " " + h + '" width="100%" height="' + h + '" role="img" aria-label="Price trend">' +
+      grid + '<path d="' + area + '" fill="var(--accent-tint)"></path>' +
+      '<path d="' + line + '" fill="none" stroke="var(--accent-deep)" stroke-width="2" stroke-linejoin="round"></path>' +
+      dots + labels + "</svg></div>";
+  }
+
+  function table(list) {
+    var best = list.reduce(function (a, b) { return (b.p || 0) > (a.p || 0) ? b : a; }, list[0]);
+    var cols = [["m", "Market"], ["d", "District"], ["c", "Commodity"], ["v", "Variety"],
+                ["a", "Min ₹"], ["b", "Max ₹"], ["p", "Modal ₹"]];
+    var head = cols.map(function (c) {
+      var isNum = "abp".indexOf(c[0]) > -1;
+      var arrow = sort.key === c[0] ? (sort.dir === 1 ? " ↑" : " ↓") : "";
+      return '<th class="sortable' + (isNum ? " r" : "") + '" data-k="' + c[0] + '">' + c[1] + arrow + "</th>";
+    }).join("");
+    var body = list.map(function (r) {
+      return "<tr" + (r === best ? ' class="best"' : "") + ">" +
+        "<td>" + esc(r.m || "—") + "</td><td>" + esc(r.d || "—") + "</td>" +
+        "<td>" + esc(r.c || "—") + "</td><td>" + esc(r.v || "—") + "</td>" +
+        '<td class="r">' + rupee(r.a) + '</td><td class="r">' + rupee(r.b) + '</td>' +
+        '<td class="r">' + rupee(r.p) + "</td></tr>";
+    }).join("");
+    return '<div class="block"><h3>Every market that filed</h3>' +
+      '<div class="sub">Highest modal rate is highlighted. Click a heading to sort.</div>' +
+      '<div class="tablewrap"><table><thead><tr>' + head + "</tr></thead><tbody>" + body + "</tbody></table></div></div>";
+  }
+
+  /* ---------- render ---------- */
+
+  function render() {
+    var stateName = $("state").options[$("state").selectedIndex].textContent;
+    view = resolve();
+    noticeFor(stateName);
+
+    var crop = $("commodity").value, dist = $("district").value;
+    $("cropTag").textContent = crop || "All crops";
+
+    if (!view.length) {
+      resetStats();
+      $("asOf").hidden = true;
+      $("scopeLine").textContent = "Nothing on file for this combination.";
+      setPanel('<div class="state"><strong>No market filed this crop in the stored window</strong>' +
+        "Kharif crops only appear once harvest arrivals start, and smaller districts often have no reporting APMC at all. Widen the district or pick another crop.</div>");
+      $("csv").disabled = true;
+      return;
+    }
+
+    var day = view[0].t, age = daysOld(day);
+    var asOf = $("asOf");
+    asOf.hidden = false;
+    asOf.textContent = "Arrivals of " + human(day);
+    asOf.className = "pill num " + (age <= 1 ? "fresh" : age <= 7 ? "" : "old");
+
+    $("scopeLine").textContent = view.length + " listings · " +
+      (dist && !relaxed ? dist : stateName) + " · " +
+      (age <= 0 ? "today" : age === 1 ? "yesterday" : age + " days ago");
+
+    var modal = median(view.map(function (r) { return r.p; }));
+    var mins = view.map(function (r) { return r.a; }).filter(isFinite);
+    var maxs = view.map(function (r) { return r.b; }).filter(isFinite);
+    var loRow = view.filter(function (r) { return r.a === Math.min.apply(null, mins); })[0];
+    var hiRow = view.filter(function (r) { return r.b === Math.max.apply(null, maxs); })[0];
+
+    var delta = "";
+    if (crop) {
+      var pool = rows.filter(function (r) { return r.c === crop && (!dist || relaxed ? true : r.d === dist); });
+      var days = uniq(pool.map(function (r) { return r.t; }));
+      var i = days.indexOf(day);
+      if (i > 0) {
+        var prev = median(pool.filter(function (r) { return r.t === days[i - 1]; }).map(function (r) { return r.p; }));
+        if (prev && modal) {
+          var pc = ((modal - prev) / prev) * 100;
+          if (Math.abs(pc) >= 0.5) {
+            delta = '<span class="delta ' + (pc > 0 ? "up" : "down") + '">' +
+              (pc > 0 ? "▲" : "▼") + Math.abs(pc).toFixed(1) + "%</span>";
+          }
+        }
+      }
+    }
+
+    $("kModal").innerHTML = rupee(modal) + delta;
+    $("kModalNote").textContent = "Median of " + view.length + " listings" + (delta ? ", against the previous reporting day" : "");
+    $("kMin").textContent = rupee(Math.min.apply(null, mins));
+    $("kMinNote").textContent = loRow ? loRow.m : "Per quintal";
+    $("kMax").textContent = rupee(Math.max.apply(null, maxs));
+    $("kMaxNote").textContent = hiRow ? hiRow.m : "Per quintal";
+    $("kMkt").textContent = uniq(view.map(function (r) { return r.m; })).length;
+    $("kMktNote").textContent = uniq(view.map(function (r) { return r.c; })).length + " commodities listed";
+
+    var sorted = view.slice().sort(function (a, b) {
+      var x = a[sort.key], y = b[sort.key];
+      if ("abp".indexOf(sort.key) > -1) return ((y || 0) - (x || 0)) * (sort.dir === 1 ? -1 : 1);
+      return String(x).localeCompare(String(y)) * (sort.dir === 1 ? 1 : -1);
+    });
+
+    setPanel(trendChart() + rangeChart(view) + table(sorted));
+    $("csv").disabled = false;
+
+    Array.prototype.forEach.call(document.querySelectorAll("th.sortable"), function (th) {
+      th.addEventListener("click", function () {
+        var k = th.getAttribute("data-k");
+        if (sort.key === k) sort.dir = -sort.dir; else { sort.key = k; sort.dir = -1; }
+        render();
+      });
+    });
+  }
+
+  /* ---------- loading ---------- */
+
+  function loadState(slug) {
+    var entry = index.states.filter(function (s) { return s.slug === slug; })[0];
+    if (!entry) return;
+    setPanel('<div class="state"><strong>Loading ' + esc(entry.state) + "</strong>Reading the stored snapshot.</div>");
+
+    fetch(DATA_DIR + entry.file, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (payload) {
+        rows = payload.records || [];
+        localStorage.setItem("mandi.state", slug);
+        fill($("district"), uniq(rows.map(function (r) { return r.d; })), "All districts", true);
+        fill($("commodity"), uniq(rows.map(function (r) { return r.c; })), "All commodities", true);
+        var days = uniq(rows.map(function (r) { return r.t; })).reverse();
+        fill($("day"), days.map(function (d) { return { value: d, label: human(d) }; }), null, false);
+        render();
+      })
+      .catch(function (e) {
+        setPanel('<div class="state err"><strong>Could not read ' + esc(entry.file) + "</strong>" +
+          "The sync may not have run for this state yet. Trigger the <code>Sync mandi prices</code> workflow, or run " +
+          "<code>python3 scripts/fetch_mandi_prices.py</code> locally. (" + esc(e.message) + ")</div>");
+      });
+  }
+
+  function boot() {
+    fetch(DATA_DIR + "index.json", { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (idx) {
+        index = idx;
+        var mins = Math.round((Date.now() - new Date(idx.generated)) / 60000);
+        var el = $("sync");
+        el.textContent = "Synced " + (mins < 60 ? mins + " min ago" : Math.round(mins / 60) + " h ago");
+        el.className = "pill num " + (mins < 180 ? "fresh" : "old");
+
+        fill($("state"), idx.states.map(function (s) { return { value: s.slug, label: s.state }; }), null, false);
+        var saved = localStorage.getItem("mandi.state");
+        if (saved && idx.states.some(function (s) { return s.slug === saved; })) $("state").value = saved;
+        loadState($("state").value);
+      })
+      .catch(function (e) {
+        $("sync").textContent = "Not synced";
+        $("sync").className = "pill old";
+        setPanel('<div class="state err"><strong>No snapshot found at ' + esc(DATA_DIR) + "index.json</strong>" +
+          "Run the fetcher once, then serve this folder over HTTP with <code>python3 -m http.server</code>. " +
+          "Opening the page as <code>file://</code> blocks the read. (" + esc(e.message) + ")</div>");
+      });
+  }
+
+  function csv() {
+    var head = ["District", "Market", "Commodity", "Variety", "Grade", "Arrival_Date", "Min_Price", "Max_Price", "Modal_Price"];
+    var lines = [head.join(",")].concat(view.map(function (r) {
+      return [r.d, r.m, r.c, r.v, r.g, r.t, r.a, r.b, r.p]
+        .map(function (v) { return '"' + String(v === null ? "" : v).replace(/"/g, '""') + '"'; }).join(",");
+    }));
+    var blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "mandi-" + $("state").value + "-" + (view[0] ? view[0].t : "export") + ".csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  /* ---------- wiring ---------- */
+
+  var savedTheme = localStorage.getItem("mandi.theme");
+  if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+  else if (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches)
+    document.documentElement.setAttribute("data-theme", "dark");
+
+  $("theme").addEventListener("click", function () {
+    var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("mandi.theme", next);
+  });
+
+  $("state").addEventListener("change", function () { loadState($("state").value); });
+  $("district").addEventListener("change", render);
+  $("commodity").addEventListener("change", render);
+  $("day").addEventListener("change", render);
+  $("csv").addEventListener("click", csv);
+
+  boot();
+})();
+</script>
+</body>
+</html>
